@@ -14,7 +14,7 @@ type CaptionRow = {
   is_featured?: boolean | null;
   like_count?: number | null;
   created_datetime_utc?: string | null;
-  images?: ImageRow | null;
+  images?: ImageRow | ImageRow[] | null;
 };
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -44,9 +44,8 @@ export default async function Home({
   let query = supabase
     .from(tableName)
     .select(
-      "id, content, image_id, is_public, is_featured, like_count, created_datetime_utc, images ( id, url, created_datetime_utc )"
-    )
-    .not("images.url", "is", null);
+      "id, content, image_id, is_public, is_featured, like_count, created_datetime_utc, images!inner ( id, url, created_datetime_utc )"
+    );
 
   if (publicOnlyParam !== "false") {
     query = query.eq("is_public", true);
@@ -107,7 +106,9 @@ export default async function Home({
         <p>No rows found in "{tableName}".</p>
       ) : (
         <ul style={{ listStyle: "none", padding: 0, margin: 0, width: "100%", maxWidth: 720 }}>
-          {data.map((row: CaptionRow, index: number) => (
+          {data.map((row: CaptionRow, index: number) => {
+            const image = Array.isArray(row.images) ? row.images[0] : row.images;
+            return (
             <li
               key={row.id ?? index}
               style={{
@@ -118,9 +119,9 @@ export default async function Home({
                 background: "#fff",
               }}
             >
-              {row.images?.url ? (
+              {image?.url ? (
                 <img
-                  src={row.images.url}
+                  src={image.url}
                   alt={row.content ?? "Caption image"}
                   style={{
                     width: "100%",
@@ -133,7 +134,8 @@ export default async function Home({
               ) : null}
               <p style={{ margin: "12px 0 0", fontSize: 16 }}>{row.content ?? "(no caption)"}</p>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
 
