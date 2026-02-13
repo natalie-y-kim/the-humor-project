@@ -21,6 +21,7 @@ export function AuthControls({ isSignedIn }: AuthControlsProps) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    router.replace("/");
     router.refresh();
   };
 

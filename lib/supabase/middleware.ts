@@ -23,8 +23,8 @@ export async function updateSession(request: NextRequest) {
 
   if (!user && request.nextUrl.pathname.startsWith("/protected")) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/login"; // or "/"
-    redirectUrl.search = "";         // no query params
+    redirectUrl.pathname = "/auth/callback";
+    redirectUrl.search = "";
     return NextResponse.redirect(redirectUrl);
   }
 
