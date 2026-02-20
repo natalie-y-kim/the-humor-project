@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthControls } from "@/app/auth-controls";
 import { createClient } from "@/lib/supabase/server";
+import { voteOnCaption } from "@/app/protected/vote-actions";
 
 type ImageRow = {
   id?: string | number | null;
@@ -95,7 +96,7 @@ export default async function ProtectedPage({
         fontFamily: "system-ui, sans-serif",
       }}
     >
-      <h1>Protected Captions</h1>
+      <h1>Captions</h1>
       <p style={{ margin: 0, color: "#475569" }}>Signed in as {user.email ?? "Google user"}</p>
       <div style={{ display: "flex", gap: 10 }}>
         <Link href="/">Home</Link>
@@ -127,6 +128,7 @@ export default async function ProtectedPage({
         <ul style={{ listStyle: "none", padding: 0, margin: 0, width: "100%", maxWidth: 720 }}>
           {data.map((row: CaptionRow, index: number) => {
             const image = Array.isArray(row.images) ? row.images[0] : row.images;
+            const captionId = typeof row.id === "string" ? row.id : row.id != null ? String(row.id) : "";
             return (
               <li
                 key={row.id ?? index}
@@ -152,6 +154,17 @@ export default async function ProtectedPage({
                   />
                 ) : null}
                 <p style={{ margin: "12px 0 0", fontSize: 16 }}>{row.content ?? "(no caption)"}</p>
+                {captionId ? (
+                  <form action={voteOnCaption} style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                    <input type="hidden" name="caption_id" value={captionId} />
+                    <button type="submit" name="vote_value" value="1">
+                      Upvote
+                    </button>
+                    <button type="submit" name="vote_value" value="-1">
+                      Downvote
+                    </button>
+                  </form>
+                ) : null}
               </li>
             );
           })}
