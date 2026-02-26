@@ -1,15 +1,15 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 type AuthControlsProps = {
   isSignedIn: boolean;
 };
 
 export function AuthControls({ isSignedIn }: AuthControlsProps) {
-  const router = useRouter();
   const supabase = createClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const signInWithGoogle = async () => {
     const redirectTo = `${window.location.origin}/auth/callback`;
@@ -20,9 +20,13 @@ export function AuthControls({ isSignedIn }: AuthControlsProps) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    router.replace("/");
-    router.refresh();
+    setIsSubmitting(true);
+    try {
+      await supabase.auth.signOut({ scope: "local" });
+      window.location.assign("/");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isSignedIn) {
@@ -30,15 +34,17 @@ export function AuthControls({ isSignedIn }: AuthControlsProps) {
       <button
         type="button"
         onClick={signOut}
+        disabled={isSubmitting}
         style={{
           border: "1px solid #cbd5e1",
           background: "white",
           borderRadius: 8,
           padding: "10px 14px",
-          cursor: "pointer",
+          cursor: isSubmitting ? "not-allowed" : "pointer",
+          opacity: isSubmitting ? 0.75 : 1,
         }}
       >
-        Sign out
+        {isSubmitting ? "Signing out..." : "Sign out"}
       </button>
     );
   }

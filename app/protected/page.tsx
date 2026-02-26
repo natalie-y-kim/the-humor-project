@@ -22,6 +22,10 @@ type CaptionRow = {
 };
 
 type SearchParams = Record<string, string | string[] | undefined>;
+type CaptionVoteRow = {
+  caption_id?: string | null;
+  vote_value?: number | null;
+};
 
 function getParam(params: SearchParams | undefined, key: string): string | undefined {
   const value = params?.[key];
@@ -33,6 +37,37 @@ export default async function ProtectedPage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
+  const filterButtonStyle: React.CSSProperties = {
+    display: "inline-block",
+    padding: "8px 14px",
+    border: "1px solid #334155",
+    borderRadius: 12,
+    background: "#1e293b",
+    color: "#e2e8f0",
+    textDecoration: "none",
+    fontWeight: 600,
+  };
+  const navButtonStyle: React.CSSProperties = {
+    display: "inline-block",
+    padding: "8px 14px",
+    border: "1px solid #334155",
+    borderRadius: 12,
+    background: "#1e293b",
+    color: "#e2e8f0",
+    textDecoration: "none",
+    fontWeight: 600,
+  };
+  const homeButtonStyle: React.CSSProperties = {
+    display: "inline-block",
+    border: "1px solid #334155",
+    background: "#1e293b",
+    borderRadius: 8,
+    padding: "10px 14px",
+    color: "#e2e8f0",
+    textDecoration: "none",
+    cursor: "pointer",
+  };
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -45,11 +80,13 @@ export default async function ProtectedPage({
   const tableName = process.env.SUPABASE_TABLE ?? "captions";
   const resolvedSearchParams = await searchParams;
   const pageParam = getParam(resolvedSearchParams, "page");
+  const indexParam = getParam(resolvedSearchParams, "index");
   const orderParam = getParam(resolvedSearchParams, "order") ?? "caption_created_desc";
   const featuredParam = getParam(resolvedSearchParams, "featured") ?? "false";
   const publicOnlyParam = getParam(resolvedSearchParams, "publicOnly") ?? "true";
 
   const page = Math.max(1, Number(pageParam ?? "1") || 1);
+  const index = Math.max(0, Number(indexParam ?? "0") || 0);
   const perPage = 12;
   const from = (page - 1) * perPage;
   const to = from + perPage - 1;
@@ -82,41 +119,83 @@ export default async function ProtectedPage({
   }
 
   const { data, error } = await query.range(from, to);
+  const captionIds =
+    data
+      ?.map((row) => (typeof row.id === "string" ? row.id : row.id != null ? String(row.id) : ""))
+      .filter((id) => id.length > 0) ?? [];
+  const votesByCaptionId = new Map<string, number>();
+
+  if (captionIds.length > 0) {
+    const { data: votes } = await supabase
+      .from("caption_votes")
+      .select("caption_id, vote_value")
+      .eq("profile_id", user.id)
+      .in("caption_id", captionIds);
+
+    (votes as CaptionVoteRow[] | null)?.forEach((vote) => {
+      if (typeof vote.caption_id === "string" && typeof vote.vote_value === "number") {
+        votesByCaptionId.set(vote.caption_id, vote.vote_value);
+      }
+    });
+  }
+
+  const showNextButton =
+    featuredParam === "true" ? Boolean(data && data.length > 0) : Boolean(data && data.length === perPage);
 
   return (
     <main
       style={{
         display: "flex",
-        justifyContent: "center",
+        justifyContent: "flex-start",
         alignItems: "center",
         minHeight: "100vh",
         flexDirection: "column",
-        gap: "16px",
-        padding: "40px",
+        gap: "12px",
+        padding: "20px 40px 32px",
+        background: "#0f172a",
+        color: "#e2e8f0",
         fontFamily: "system-ui, sans-serif",
       }}
     >
       <h1>Captions</h1>
-      <p style={{ margin: 0, color: "#475569" }}>Signed in as {user.email ?? "Google user"}</p>
-      <div style={{ display: "flex", gap: 10 }}>
-        <Link href="/">Home</Link>
-        <AuthControls isSignedIn />
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 720,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          marginTop: -4,
+        }}
+      >
+        <Link href="/" style={homeButtonStyle}>
+          Home
+        </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <p style={{ margin: 0, color: "#94a3b8", textAlign: "right" }}>Signed in as {user.email ?? "Google user"}</p>
+          <AuthControls isSignedIn />
+        </div>
       </div>
 
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
         <a
-          href={`/protected?order=caption_created_desc&featured=${featuredParam}&publicOnly=${publicOnlyParam}`}
+          style={filterButtonStyle}
+          href={`/protected?order=caption_created_desc&featured=false&publicOnly=${publicOnlyParam}`}
         >
           Newest Captions
         </a>
-        <a href={`/protected?order=likes_desc&featured=${featuredParam}&publicOnly=${publicOnlyParam}`}>
+        <a
+          style={filterButtonStyle}
+          href={`/protected?order=likes_desc&featured=false&publicOnly=${publicOnlyParam}`}
+        >
           Most Liked
         </a>
-        <a href={`/protected?order=${orderParam}&featured=true&publicOnly=${publicOnlyParam}`}>
+        <a
+          style={filterButtonStyle}
+          href={`/protected?order=${orderParam}&featured=true&publicOnly=${publicOnlyParam}`}
+        >
           Featured Only
-        </a>
-        <a href={`/protected?order=${orderParam}&featured=false&publicOnly=${publicOnlyParam}`}>
-          All Captions
         </a>
       </div>
 
@@ -125,19 +204,21 @@ export default async function ProtectedPage({
       ) : !data || data.length === 0 ? (
         <p>No rows found in "{tableName}".</p>
       ) : (
-        <ul style={{ listStyle: "none", padding: 0, margin: 0, width: "100%", maxWidth: 720 }}>
-          {data.map((row: CaptionRow, index: number) => {
-            const image = Array.isArray(row.images) ? row.images[0] : row.images;
-            const captionId = typeof row.id === "string" ? row.id : row.id != null ? String(row.id) : "";
-            return (
+        (() => {
+          const currentIndex = Math.min(index, data.length - 1);
+          const row = data[currentIndex] as CaptionRow;
+          const image = Array.isArray(row.images) ? row.images[0] : row.images;
+          const captionId = typeof row.id === "string" ? row.id : row.id != null ? String(row.id) : "";
+          const currentVote = captionId ? votesByCaptionId.get(captionId) : undefined;
+          return (
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, width: "100%", maxWidth: 720 }}>
               <li
-                key={row.id ?? index}
+                key={row.id ?? currentIndex}
                 style={{
-                  border: "1px solid #e5e7eb",
+                  border: "1px solid #334155",
                   borderRadius: 8,
                   padding: "12px 16px",
-                  marginBottom: 12,
-                  background: "#fff",
+                  background: "#111827",
                 }}
               >
                 {image?.url ? (
@@ -153,37 +234,96 @@ export default async function ProtectedPage({
                     }}
                   />
                 ) : null}
-                <p style={{ margin: "12px 0 0", fontSize: 16 }}>{row.content ?? "(no caption)"}</p>
+                <p
+                  style={{
+                    margin: "14px 0 0",
+                    fontSize: 24,
+                    fontWeight: 700,
+                    lineHeight: 1.35,
+                    textAlign: "center",
+                  }}
+                >
+                  {row.content ?? "(no caption)"}
+                </p>
                 {captionId ? (
-                  <form action={voteOnCaption} style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                  <form
+                    action={voteOnCaption}
+                    style={{ display: "flex", gap: 12, marginTop: 14, justifyContent: "center" }}
+                  >
                     <input type="hidden" name="caption_id" value={captionId} />
-                    <button type="submit" name="vote_value" value="1">
-                      Upvote
+                    <input type="hidden" name="current_page" value={page} />
+                    <input type="hidden" name="current_index" value={currentIndex} />
+                    <input type="hidden" name="total_in_page" value={data.length} />
+                    <input type="hidden" name="order" value={orderParam} />
+                    <input type="hidden" name="featured" value={featuredParam} />
+                    <input type="hidden" name="publicOnly" value={publicOnlyParam} />
+                    <button
+                      type="submit"
+                      name="vote_value"
+                      value="-1"
+                      aria-label="Downvote"
+                      style={{
+                        width: 56,
+                        height: 56,
+                        fontSize: 24,
+                        fontWeight: 700,
+                        borderRadius: "50%",
+                        border: currentVote === -1 ? "1px solid #ef4444" : "1px solid #334155",
+                        background: currentVote === -1 ? "#7f1d1d" : "#111827",
+                        color: currentVote === -1 ? "#fecaca" : "#e2e8f0",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                      }}
+                    >
+                      👎
                     </button>
-                    <button type="submit" name="vote_value" value="-1">
-                      Downvote
+                    <button
+                      type="submit"
+                      name="vote_value"
+                      value="1"
+                      aria-label="Upvote"
+                      style={{
+                        width: 56,
+                        height: 56,
+                        fontSize: 24,
+                        fontWeight: 700,
+                        borderRadius: "50%",
+                        border: currentVote === 1 ? "1px solid #22c55e" : "1px solid #334155",
+                        background: currentVote === 1 ? "#14532d" : "#111827",
+                        color: currentVote === 1 ? "#bbf7d0" : "#e2e8f0",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                      }}
+                    >
+                      👍
                     </button>
                   </form>
                 ) : null}
               </li>
-            );
-          })}
-        </ul>
+            </ul>
+          );
+        })()
       )}
 
-      <div style={{ display: "flex", gap: 12 }}>
+      <div style={{ display: "flex", width: "100%", maxWidth: 720 }}>
         {page > 1 ? (
           <a
-            href={`/protected?page=${page - 1}&order=${orderParam}&featured=${featuredParam}&publicOnly=${publicOnlyParam}`}
+            style={navButtonStyle}
+            href={`/protected?page=${page - 1}&index=0&order=${orderParam}&featured=${featuredParam}&publicOnly=${publicOnlyParam}`}
           >
-            Previous
+            ← Previous
           </a>
         ) : null}
-        {data && data.length === perPage ? (
+        {showNextButton ? (
           <a
-            href={`/protected?page=${page + 1}&order=${orderParam}&featured=${featuredParam}&publicOnly=${publicOnlyParam}`}
+            style={{ ...navButtonStyle, marginLeft: "auto" }}
+            href={`/protected?page=${page + 1}&index=0&order=${orderParam}&featured=${featuredParam}&publicOnly=${publicOnlyParam}`}
           >
-            Next
+            Next →
           </a>
         ) : null}
       </div>
