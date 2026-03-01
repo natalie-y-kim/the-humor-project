@@ -11,3 +11,15 @@ body {
   background: #f8fafc;
   color: #0f172a;
 }
+
+.protected-hover-button {
+  transition: filter 120ms ease, opacity 120ms ease;
+}
+
+.protected-hover-button:hover {
+  filter: brightness(1.28);
+}
+
+.protected-hover-button:disabled {
+  filter: none;
+}

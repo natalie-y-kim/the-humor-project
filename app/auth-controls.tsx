@@ -5,9 +5,10 @@ import { useState } from "react";
 
 type AuthControlsProps = {
   isSignedIn: boolean;
+  variant?: "default" | "protected";
 };
 
-export function AuthControls({ isSignedIn }: AuthControlsProps) {
+export function AuthControls({ isSignedIn, variant = "default" }: AuthControlsProps) {
   const supabase = createClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -30,16 +31,20 @@ export function AuthControls({ isSignedIn }: AuthControlsProps) {
   };
 
   if (isSignedIn) {
+    const isProtectedVariant = variant === "protected";
     return (
       <button
         type="button"
         onClick={signOut}
         disabled={isSubmitting}
+        className={isProtectedVariant ? "protected-hover-button" : undefined}
         style={{
-          border: "1px solid #cbd5e1",
-          background: "white",
+          border: isProtectedVariant ? "1px solid #334155" : "1px solid #cbd5e1",
+          background: isProtectedVariant ? "#1e293b" : "white",
+          color: isProtectedVariant ? "#e2e8f0" : "inherit",
           borderRadius: 8,
           padding: "10px 14px",
+          fontSize: isProtectedVariant ? 16 : undefined,
           cursor: isSubmitting ? "not-allowed" : "pointer",
           opacity: isSubmitting ? 0.75 : 1,
         }}

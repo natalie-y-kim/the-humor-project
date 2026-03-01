@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AuthControls } from "@/app/auth-controls";
 import { createClient } from "@/lib/supabase/server";
 import { voteOnCaption } from "@/app/protected/vote-actions";
+import { CaptionUploader } from "./CaptionUploader";
 
 type ImageRow = {
   id?: string | number | null;
@@ -169,29 +170,33 @@ export default async function ProtectedPage({
           marginTop: -4,
         }}
       >
-        <Link href="/" style={homeButtonStyle}>
+        <Link href="/" style={homeButtonStyle} className="protected-hover-button">
           Home
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <p style={{ margin: 0, color: "#94a3b8", textAlign: "right" }}>Signed in as {user.email ?? "Google user"}</p>
-          <AuthControls isSignedIn />
+          <AuthControls isSignedIn variant="protected" />
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+      <CaptionUploader />
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 4 }}>
         <a
+          className="protected-hover-button"
           style={filterButtonStyle}
           href={`/protected?order=caption_created_desc&featured=false&publicOnly=${publicOnlyParam}`}
         >
           Newest Captions
         </a>
         <a
+          className="protected-hover-button"
           style={filterButtonStyle}
           href={`/protected?order=likes_desc&featured=false&publicOnly=${publicOnlyParam}`}
         >
           Most Liked
         </a>
         <a
+          className="protected-hover-button"
           style={filterButtonStyle}
           href={`/protected?order=${orderParam}&featured=true&publicOnly=${publicOnlyParam}`}
         >
@@ -262,6 +267,7 @@ export default async function ProtectedPage({
                       name="vote_value"
                       value="-1"
                       aria-label="Downvote"
+                      className="protected-hover-button"
                       style={{
                         width: 56,
                         height: 56,
@@ -284,6 +290,7 @@ export default async function ProtectedPage({
                       name="vote_value"
                       value="1"
                       aria-label="Upvote"
+                      className="protected-hover-button"
                       style={{
                         width: 56,
                         height: 56,
@@ -312,6 +319,7 @@ export default async function ProtectedPage({
       <div style={{ display: "flex", width: "100%", maxWidth: 720 }}>
         {page > 1 ? (
           <a
+            className="protected-hover-button"
             style={navButtonStyle}
             href={`/protected?page=${page - 1}&index=0&order=${orderParam}&featured=${featuredParam}&publicOnly=${publicOnlyParam}`}
           >
@@ -320,6 +328,7 @@ export default async function ProtectedPage({
         ) : null}
         {showNextButton ? (
           <a
+            className="protected-hover-button"
             style={{ ...navButtonStyle, marginLeft: "auto" }}
             href={`/protected?page=${page + 1}&index=0&order=${orderParam}&featured=${featuredParam}&publicOnly=${publicOnlyParam}`}
           >
