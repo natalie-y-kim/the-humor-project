@@ -9,14 +9,12 @@ export async function voteOnCaption(formData: FormData) {
   const voteValueRaw = formData.get("vote_value");
   const currentPageRaw = formData.get("current_page");
   const currentIndexRaw = formData.get("current_index");
-  const totalInPageRaw = formData.get("total_in_page");
   const orderParam = formData.get("order");
   const featuredParam = formData.get("featured");
   const publicOnlyParam = formData.get("publicOnly");
   const voteValue = Number(voteValueRaw);
   const currentPage = Math.max(1, Number(currentPageRaw) || 1);
   const currentIndex = Math.max(0, Number(currentIndexRaw) || 0);
-  const totalInPage = Math.max(1, Number(totalInPageRaw) || 1);
 
   if (typeof captionId !== "string" || !captionId || (voteValue !== 1 && voteValue !== -1)) {
     return;
@@ -61,12 +59,9 @@ export async function voteOnCaption(formData: FormData) {
 
   revalidatePath("/protected");
 
-  const nextIndex = currentIndex + 1;
-  const nextPage = nextIndex >= totalInPage ? currentPage + 1 : currentPage;
-  const normalizedNextIndex = nextIndex >= totalInPage ? 0 : nextIndex;
   const params = new URLSearchParams({
-    page: String(nextPage),
-    index: String(normalizedNextIndex),
+    page: String(currentPage),
+    index: String(currentIndex),
     order: typeof orderParam === "string" && orderParam ? orderParam : "caption_created_desc",
     featured: typeof featuredParam === "string" && featuredParam ? featuredParam : "false",
     publicOnly: typeof publicOnlyParam === "string" && publicOnlyParam ? publicOnlyParam : "true",

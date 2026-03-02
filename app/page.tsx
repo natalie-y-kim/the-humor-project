@@ -48,7 +48,7 @@ export default async function Home() {
             <>
               <p style={{ margin: 0 }}>You are signed in as {user.email ?? "Google user"}.</p>
               <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <Link href="/protected">Open protected route</Link>
+                <Link href="/protected?order=likes_desc&featured=false&publicOnly=true">Open protected route</Link>
                 <AuthControls isSignedIn />
               </div>
             </>

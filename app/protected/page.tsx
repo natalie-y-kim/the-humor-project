@@ -3,12 +3,12 @@ import { redirect } from "next/navigation";
 import { AuthControls } from "@/app/auth-controls";
 import { createClient } from "@/lib/supabase/server";
 import { voteOnCaption } from "@/app/protected/vote-actions";
-import { CaptionUploader } from "./CaptionUploader";
 
 type ImageRow = {
   id?: string | number | null;
   url?: string | null;
   created_datetime_utc?: string | null;
+  is_public?: boolean | null;
 };
 
 type CaptionRow = {
@@ -82,7 +82,7 @@ export default async function ProtectedPage({
   const resolvedSearchParams = await searchParams;
   const pageParam = getParam(resolvedSearchParams, "page");
   const indexParam = getParam(resolvedSearchParams, "index");
-  const orderParam = getParam(resolvedSearchParams, "order") ?? "caption_created_desc";
+  const orderParam = getParam(resolvedSearchParams, "order") ?? "likes_desc";
   const featuredParam = getParam(resolvedSearchParams, "featured") ?? "false";
   const publicOnlyParam = getParam(resolvedSearchParams, "publicOnly") ?? "true";
 
@@ -95,7 +95,7 @@ export default async function ProtectedPage({
   let query = supabase
     .from(tableName)
     .select(
-      "id, content, image_id, is_public, is_featured, like_count, created_datetime_utc, images!inner ( id, url, created_datetime_utc )"
+      "id, content, image_id, is_public, is_featured, like_count, created_datetime_utc, images!inner ( id, url, created_datetime_utc, is_public )"
     );
 
   if (publicOnlyParam !== "false") {
@@ -106,20 +106,24 @@ export default async function ProtectedPage({
     query = query.eq("is_featured", true);
   }
 
+  query = query.eq("images.is_public", true);
+
   switch (orderParam) {
     case "likes_desc":
-      query = query.order("like_count", { ascending: false });
+      query = query.order("like_count", { ascending: false }).order("created_datetime_utc", { ascending: false });
       break;
     case "image_created_desc":
-      query = query.order("created_datetime_utc", { ascending: false, foreignTable: "images" });
+      query = query
+        .order("created_datetime_utc", { ascending: false, foreignTable: "images" })
+        .order("created_datetime_utc", { ascending: false });
       break;
     case "caption_created_desc":
     default:
-      query = query.order("created_datetime_utc", { ascending: false });
+      query = query.order("created_datetime_utc", { ascending: false }).order("id", { ascending: false });
       break;
   }
 
-  const { data, error } = await query.range(from, to);
+  const { data, error } = featuredParam === "true" ? await query : await query.range(from, to);
   const captionIds =
     data
       ?.map((row) => (typeof row.id === "string" ? row.id : row.id != null ? String(row.id) : ""))
@@ -140,8 +144,12 @@ export default async function ProtectedPage({
     });
   }
 
-  const showNextButton =
-    featuredParam === "true" ? Boolean(data && data.length > 0) : Boolean(data && data.length === perPage);
+  const dataLength = data?.length ?? 0;
+  const clampedIndex = dataLength > 0 ? Math.max(0, Math.min(index, dataLength - 1)) : 0;
+  const hasPrevCaption = clampedIndex > 0;
+  const hasNextCaption = clampedIndex < dataLength - 1;
+  const showPrevPageButton = featuredParam !== "true" && !hasPrevCaption && page > 1;
+  const showNextPageButton = featuredParam !== "true" && !hasNextCaption && dataLength === perPage;
 
   return (
     <main
@@ -162,24 +170,34 @@ export default async function ProtectedPage({
       <div
         style={{
           width: "100%",
-          maxWidth: 720,
+          maxWidth: 980,
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          justifyContent: "flex-start",
           gap: 12,
           marginTop: -4,
         }}
       >
-        <Link href="/" style={homeButtonStyle} className="protected-hover-button">
-          Home
-        </Link>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <Link href="/" style={homeButtonStyle} className="protected-hover-button">
+            Home
+          </Link>
+          <Link
+            href={`/protected?order=likes_desc&featured=false&publicOnly=${publicOnlyParam}`}
+            style={homeButtonStyle}
+            className="protected-hover-button"
+          >
+            Vote Captions
+          </Link>
+          <Link href="/protected/upload" style={homeButtonStyle} className="protected-hover-button">
+            Upload Image
+          </Link>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginLeft: "auto" }}>
           <p style={{ margin: 0, color: "#94a3b8", textAlign: "right" }}>Signed in as {user.email ?? "Google user"}</p>
           <AuthControls isSignedIn variant="protected" />
         </div>
       </div>
-
-      <CaptionUploader />
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 4 }}>
         <a
           className="protected-hover-button"
@@ -203,14 +221,13 @@ export default async function ProtectedPage({
           Featured Only
         </a>
       </div>
-
       {error ? (
         <p>Failed to load rows: {error.message}</p>
       ) : !data || data.length === 0 ? (
         <p>No rows found in "{tableName}".</p>
       ) : (
         (() => {
-          const currentIndex = Math.min(index, data.length - 1);
+          const currentIndex = clampedIndex;
           const row = data[currentIndex] as CaptionRow;
           const image = Array.isArray(row.images) ? row.images[0] : row.images;
           const captionId = typeof row.id === "string" ? row.id : row.id != null ? String(row.id) : "";
@@ -228,7 +245,7 @@ export default async function ProtectedPage({
               >
                 {image?.url ? (
                   <img
-                    src={image.url}
+                    src={encodeURI(image.url)}
                     alt={row.content ?? "Caption image"}
                     style={{
                       width: "100%",
@@ -250,6 +267,11 @@ export default async function ProtectedPage({
                 >
                   {row.content ?? "(no caption)"}
                 </p>
+                {orderParam === "likes_desc" ? (
+                  <p style={{ margin: "8px 0 0", textAlign: "center", color: "#94a3b8", fontWeight: 600 }}>
+                    Likes: {row.like_count ?? 0}
+                  </p>
+                ) : null}
                 {captionId ? (
                   <form
                     action={voteOnCaption}
@@ -317,7 +339,15 @@ export default async function ProtectedPage({
       )}
 
       <div style={{ display: "flex", width: "100%", maxWidth: 720 }}>
-        {page > 1 ? (
+        {hasPrevCaption ? (
+          <a
+            className="protected-hover-button"
+            style={navButtonStyle}
+            href={`/protected?page=${page}&index=${clampedIndex - 1}&order=${orderParam}&featured=${featuredParam}&publicOnly=${publicOnlyParam}`}
+          >
+            ← Previous
+          </a>
+        ) : showPrevPageButton ? (
           <a
             className="protected-hover-button"
             style={navButtonStyle}
@@ -326,7 +356,15 @@ export default async function ProtectedPage({
             ← Previous
           </a>
         ) : null}
-        {showNextButton ? (
+        {hasNextCaption ? (
+          <a
+            className="protected-hover-button"
+            style={{ ...navButtonStyle, marginLeft: "auto" }}
+            href={`/protected?page=${page}&index=${clampedIndex + 1}&order=${orderParam}&featured=${featuredParam}&publicOnly=${publicOnlyParam}`}
+          >
+            Next →
+          </a>
+        ) : showNextPageButton ? (
           <a
             className="protected-hover-button"
             style={{ ...navButtonStyle, marginLeft: "auto" }}
