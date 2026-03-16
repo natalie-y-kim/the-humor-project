@@ -65,6 +65,9 @@ CREATE TABLE public.caption_votes (
   vote_value smallint NOT NULL,
   profile_id uuid NOT NULL,
   caption_id uuid NOT NULL,
+  user_id uuid,
+  value smallint,
+  created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT caption_votes_pkey PRIMARY KEY (id),
   CONSTRAINT caption_votes_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id),
   CONSTRAINT caption_votes_caption_id_fkey FOREIGN KEY (caption_id) REFERENCES public.captions(id)
@@ -391,16 +394,6 @@ CREATE TABLE public.reported_images (
   CONSTRAINT reported_images_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id),
   CONSTRAINT reported_images_image_id_fkey FOREIGN KEY (image_id) REFERENCES public.images(id)
 );
-CREATE TABLE public.sb_caption_votes (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  caption_id uuid,
-  profile_id uuid,
-  vote_value integer CHECK (vote_value = ANY (ARRAY[1, '-1'::integer])),
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT sb_caption_votes_pkey PRIMARY KEY (id),
-  CONSTRAINT sb_caption_votes_caption_id_fkey FOREIGN KEY (caption_id) REFERENCES public.captions(id),
-  CONSTRAINT sb_caption_votes_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES auth.users(id)
-);
 CREATE TABLE public.screenshots (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   created_datetime_utc timestamp with time zone NOT NULL DEFAULT now(),
@@ -444,6 +437,7 @@ CREATE TABLE public.studies (
   description text,
   start_datetime_utc timestamp with time zone,
   end_datetime_utc timestamp with time zone,
+  is_hidden boolean NOT NULL DEFAULT false,
   CONSTRAINT studies_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.study_caption_mappings (
@@ -531,4 +525,11 @@ CREATE TABLE public.university_majors (
   name text NOT NULL UNIQUE,
   id integer NOT NULL,
   CONSTRAINT university_majors_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.whitelist_email_addresses (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  created_datetime_utc timestamp with time zone NOT NULL DEFAULT now(),
+  modified_datetime_utc timestamp with time zone,
+  email_address character varying NOT NULL,
+  CONSTRAINT whitelist_email_addresses_pkey PRIMARY KEY (id)
 );

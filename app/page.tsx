@@ -19,15 +19,18 @@ export default async function Home() {
         background: "#0f172a",
       }}
     >
-      <div style={{ width: "100%", maxWidth: 540, display: "grid", gap: 24 }}>
+      <div style={{ width: "100%", maxWidth: 900, display: "grid", gap: 24, justifyItems: "center" }}>
         <h1
           style={{
             margin: 0,
-            fontSize: 64,
+            marginTop: -18,
+            width: "100%",
+            fontSize: "clamp(32px, 8vw, 80px)",
             lineHeight: 1.05,
-            fontWeight: 800,
+            fontWeight: 500,
             color: "#e2e8f0",
             textAlign: "center",
+            whiteSpace: "nowrap",
           }}
         >
           AI Caption Studio

@@ -48,6 +48,11 @@ export default async function ProtectedPage({
     textDecoration: "none",
     fontWeight: 600,
   };
+  const activeFilterButtonStyle: React.CSSProperties = {
+    border: "1px solid #eab308",
+    background: "#713f12",
+    color: "#fef9c3",
+  };
   const navButtonStyle: React.CSSProperties = {
     display: "inline-block",
     padding: "8px 14px",
@@ -85,6 +90,9 @@ export default async function ProtectedPage({
   const orderParam = getParam(resolvedSearchParams, "order") ?? "likes_desc";
   const featuredParam = getParam(resolvedSearchParams, "featured") ?? "false";
   const publicOnlyParam = getParam(resolvedSearchParams, "publicOnly") ?? "true";
+  const isNewestSelected = featuredParam !== "true" && orderParam === "caption_created_desc";
+  const isMostLikedSelected = featuredParam !== "true" && orderParam === "likes_desc";
+  const isFeaturedSelected = featuredParam === "true";
 
   const page = Math.max(1, Number(pageParam ?? "1") || 1);
   const index = Math.max(0, Number(indexParam ?? "0") || 0);
@@ -201,21 +209,21 @@ export default async function ProtectedPage({
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 4 }}>
         <a
           className="protected-hover-button"
-          style={filterButtonStyle}
+          style={{ ...filterButtonStyle, ...(isNewestSelected ? activeFilterButtonStyle : {}) }}
           href={`/protected?order=caption_created_desc&featured=false&publicOnly=${publicOnlyParam}`}
         >
           Newest Captions
         </a>
         <a
           className="protected-hover-button"
-          style={filterButtonStyle}
+          style={{ ...filterButtonStyle, ...(isMostLikedSelected ? activeFilterButtonStyle : {}) }}
           href={`/protected?order=likes_desc&featured=false&publicOnly=${publicOnlyParam}`}
         >
           Most Liked
         </a>
         <a
           className="protected-hover-button"
-          style={filterButtonStyle}
+          style={{ ...filterButtonStyle, ...(isFeaturedSelected ? activeFilterButtonStyle : {}) }}
           href={`/protected?order=${orderParam}&featured=true&publicOnly=${publicOnlyParam}`}
         >
           Featured Only
@@ -233,7 +241,7 @@ export default async function ProtectedPage({
           const captionId = typeof row.id === "string" ? row.id : row.id != null ? String(row.id) : "";
           const currentVote = captionId ? votesByCaptionId.get(captionId) : undefined;
           return (
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, width: "100%", maxWidth: 720 }}>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, width: "100%", maxWidth: 920 }}>
               <li
                 key={row.id ?? currentIndex}
                 style={{
@@ -249,7 +257,7 @@ export default async function ProtectedPage({
                     alt={row.content ?? "Caption image"}
                     style={{
                       width: "100%",
-                      maxHeight: 220,
+                      maxHeight: 460,
                       objectFit: "contain",
                       borderRadius: 6,
                       background: "#f3f4f6",
@@ -338,7 +346,7 @@ export default async function ProtectedPage({
         })()
       )}
 
-      <div style={{ display: "flex", width: "100%", maxWidth: 720 }}>
+      <div style={{ display: "flex", width: "100%", maxWidth: 920 }}>
         {hasPrevCaption ? (
           <a
             className="protected-hover-button"
