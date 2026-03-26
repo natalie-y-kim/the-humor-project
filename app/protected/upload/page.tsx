@@ -5,17 +5,34 @@ import { createClient } from "@/lib/supabase/server";
 import { CaptionUploader } from "../CaptionUploader";
 
 export default async function ProtectedUploadPage() {
+  const navButtonStyle: React.CSSProperties = {
+    display: "inline-block",
+    padding: "10px 16px",
+    border: "1px solid rgba(251, 191, 36, 0.42)",
+    borderRadius: 14,
+    background: "linear-gradient(135deg, #fcd34d 0%, #fbbf24 55%, #f59e0b 100%)",
+    color: "#1f2937",
+    textDecoration: "none",
+    fontWeight: 700,
+    boxShadow: "0 12px 28px rgba(245, 158, 11, 0.24)",
+  };
+  const activeNavButtonStyle: React.CSSProperties = {
+    border: "1px solid rgba(253, 230, 138, 0.7)",
+    background: "linear-gradient(135deg, #fde68a 0%, #fcd34d 52%, #f59e0b 100%)",
+    color: "#111827",
+    boxShadow: "0 14px 34px rgba(245, 158, 11, 0.32)",
+  };
   const homeButtonStyle: React.CSSProperties = {
     display: "inline-block",
     border: "1px solid #334155",
-    background: "#1e293b",
-    borderRadius: 8,
-    padding: "10px 14px",
-    color: "#e2e8f0",
+    background: "transparent",
+    borderRadius: 999,
+    padding: "8px 12px",
+    color: "#94a3b8",
     textDecoration: "none",
     cursor: "pointer",
+    fontSize: 14,
   };
-
   const supabase = await createClient();
   const {
     data: { user },
@@ -33,43 +50,126 @@ export default async function ProtectedUploadPage() {
         alignItems: "center",
         minHeight: "100vh",
         flexDirection: "column",
-        gap: "12px",
+        gap: "18px",
         padding: "20px 40px 32px",
         background: "#0f172a",
         color: "#e2e8f0",
         fontFamily: "system-ui, sans-serif",
       }}
     >
-      <h1>Upload Image</h1>
       <div
         style={{
           width: "100%",
           maxWidth: 980,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          gap: 12,
-          marginTop: -4,
+          display: "grid",
+          gap: 8,
+          paddingBottom: 4,
+          borderBottom: "1px solid rgba(51, 65, 85, 0.55)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Link href="/" style={homeButtonStyle} className="protected-hover-button">
-            Home
-          </Link>
-          <Link
-            href="/protected?order=likes_desc&featured=false&publicOnly=true"
-            style={homeButtonStyle}
-            className="protected-hover-button"
-          >
-            Vote Captions
-          </Link>
-          <Link href="/protected/upload" style={homeButtonStyle} className="protected-hover-button">
-            Upload Image
-          </Link>
+        <p
+          style={{
+            margin: 0,
+            color: "#fcd34d",
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+          }}
+        >
+          Create
+        </p>
+        <div style={{ display: "grid", gap: 4 }}>
+          <h1 style={{ margin: 0, fontSize: "clamp(32px, 5vw, 44px)", lineHeight: 1.05 }}>
+            Upload an image and generate captions
+          </h1>
+          <p style={{ margin: 0, color: "#94a3b8", fontSize: 15, lineHeight: 1.5 }}>
+            Start with one image, generate options, and review the strongest caption directions.
+          </p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginLeft: "auto" }}>
-          <p style={{ margin: 0, color: "#94a3b8", textAlign: "right" }}>Signed in as {user.email ?? "Google user"}</p>
-          <AuthControls isSignedIn variant="protected" />
+      </div>
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 980,
+          display: "grid",
+          gap: 12,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 14,
+            paddingBottom: 12,
+            borderBottom: "1px solid rgba(51, 65, 85, 0.38)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Link
+              href="/"
+              style={{
+                ...homeButtonStyle,
+                padding: "6px 10px",
+                color: "#64748b",
+                fontSize: 13,
+              }}
+              className="protected-hover-button"
+            >
+              Home
+            </Link>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "2px",
+                borderBottom: "1px solid rgba(51, 65, 85, 0.8)",
+              }}
+            >
+              <Link
+                href="/protected?order=likes_desc&featured=false&publicOnly=true"
+                style={{
+                  ...navButtonStyle,
+                  padding: "10px 12px 12px",
+                  border: "none",
+                  borderBottom: "2px solid transparent",
+                  borderRadius: 0,
+                  background: "transparent",
+                  color: "#94a3b8",
+                  boxShadow: "none",
+                }}
+                className="protected-hover-button"
+              >
+                Discover
+              </Link>
+              <Link
+                href="/protected/upload"
+                style={{
+                  ...navButtonStyle,
+                  ...activeNavButtonStyle,
+                  padding: "10px 12px 12px",
+                  border: "none",
+                  borderBottom: "2px solid #fde68a",
+                  borderRadius: 0,
+                  background: "transparent",
+                  color: "#fde68a",
+                  boxShadow: "none",
+                }}
+                className="protected-hover-button"
+              >
+                Create
+              </Link>
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginLeft: "auto" }}>
+            <p style={{ margin: 0, color: "#64748b", textAlign: "right", fontSize: 14 }}>
+              Signed in as {user.email ?? "Google user"}
+            </p>
+            <AuthControls isSignedIn variant="protected" />
+          </div>
         </div>
       </div>
 
