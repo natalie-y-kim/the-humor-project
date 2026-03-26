@@ -31,7 +31,7 @@ export async function voteOnCaption(formData: FormData) {
 
   const { data: existingVote, error: existingVoteError } = await supabase
     .from("caption_votes")
-    .select("id")
+    .select("id, vote_value")
     .eq("profile_id", user.id)
     .eq("caption_id", captionId)
     .maybeSingle();
@@ -41,13 +41,17 @@ export async function voteOnCaption(formData: FormData) {
   }
 
   if (existingVote?.id) {
-    await supabase
-      .from("caption_votes")
-      .update({
-        vote_value: voteValue,
-        modified_datetime_utc: new Date().toISOString(),
-      })
-      .eq("id", existingVote.id);
+    if (existingVote.vote_value === voteValue) {
+      await supabase.from("caption_votes").delete().eq("id", existingVote.id);
+    } else {
+      await supabase
+        .from("caption_votes")
+        .update({
+          vote_value: voteValue,
+          modified_datetime_utc: new Date().toISOString(),
+        })
+        .eq("id", existingVote.id);
+    }
   } else {
     await supabase.from("caption_votes").insert({
       profile_id: user.id,
