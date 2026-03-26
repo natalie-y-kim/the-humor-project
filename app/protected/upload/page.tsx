@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AuthControls } from "@/app/auth-controls";
 import { createClient } from "@/lib/supabase/server";
 import { CaptionUploader } from "../CaptionUploader";
+import { ThemeToggle } from "@/app/theme-toggle";
 
 export default async function ProtectedUploadPage() {
   const navButtonStyle: React.CSSProperties = {
@@ -11,7 +12,7 @@ export default async function ProtectedUploadPage() {
     border: "1px solid rgba(251, 191, 36, 0.42)",
     borderRadius: 14,
     background: "linear-gradient(135deg, #fcd34d 0%, #fbbf24 55%, #f59e0b 100%)",
-    color: "#1f2937",
+    color: "var(--accent-text)",
     textDecoration: "none",
     fontWeight: 700,
     boxShadow: "0 12px 28px rgba(245, 158, 11, 0.24)",
@@ -19,19 +20,19 @@ export default async function ProtectedUploadPage() {
   const activeNavButtonStyle: React.CSSProperties = {
     border: "1px solid rgba(253, 230, 138, 0.7)",
     background: "linear-gradient(135deg, #fde68a 0%, #fcd34d 52%, #f59e0b 100%)",
-    color: "#111827",
+    color: "var(--accent-text)",
     boxShadow: "0 14px 34px rgba(245, 158, 11, 0.32)",
   };
   const homeButtonStyle: React.CSSProperties = {
     display: "inline-block",
-    border: "1px solid #334155",
+    border: "1px solid var(--border-strong)",
     background: "transparent",
     borderRadius: 999,
     padding: "8px 12px",
-    color: "#94a3b8",
+    color: "var(--text-muted)",
     textDecoration: "none",
-    cursor: "pointer",
     fontSize: 14,
+    fontWeight: 400,
   };
   const supabase = await createClient();
   const {
@@ -52,8 +53,8 @@ export default async function ProtectedUploadPage() {
         flexDirection: "column",
         gap: "18px",
         padding: "20px 40px 32px",
-        background: "#0f172a",
-        color: "#e2e8f0",
+        background: "var(--shell-bg)",
+        color: "var(--text-primary)",
         fontFamily: "system-ui, sans-serif",
       }}
     >
@@ -64,13 +65,13 @@ export default async function ProtectedUploadPage() {
           display: "grid",
           gap: 8,
           paddingBottom: 4,
-          borderBottom: "1px solid rgba(51, 65, 85, 0.55)",
+          borderBottom: "1px solid var(--border-default)",
         }}
       >
         <p
           style={{
             margin: 0,
-            color: "#fcd34d",
+            color: "var(--accent-strong)",
             fontSize: 12,
             fontWeight: 700,
             letterSpacing: "0.08em",
@@ -83,7 +84,7 @@ export default async function ProtectedUploadPage() {
           <h1 style={{ margin: 0, fontSize: "clamp(32px, 5vw, 44px)", lineHeight: 1.05 }}>
             Upload an image and generate captions
           </h1>
-          <p style={{ margin: 0, color: "#94a3b8", fontSize: 15, lineHeight: 1.5 }}>
+          <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 15, lineHeight: 1.5 }}>
             Start with one image, generate options, and review the strongest caption directions.
           </p>
         </div>
@@ -104,7 +105,7 @@ export default async function ProtectedUploadPage() {
             justifyContent: "space-between",
             gap: 14,
             paddingBottom: 12,
-            borderBottom: "1px solid rgba(51, 65, 85, 0.38)",
+            borderBottom: "1px solid var(--border-default)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -112,9 +113,7 @@ export default async function ProtectedUploadPage() {
               href="/"
               style={{
                 ...homeButtonStyle,
-                padding: "6px 10px",
-                color: "#64748b",
-                fontSize: 13,
+                color: "var(--text-muted)",
               }}
               className="protected-hover-button"
             >
@@ -126,7 +125,7 @@ export default async function ProtectedUploadPage() {
                 alignItems: "center",
                 gap: 10,
                 padding: "2px",
-                borderBottom: "1px solid rgba(51, 65, 85, 0.8)",
+                borderBottom: "1px solid var(--border-strong)",
               }}
             >
               <Link
@@ -138,7 +137,7 @@ export default async function ProtectedUploadPage() {
                   borderBottom: "2px solid transparent",
                   borderRadius: 0,
                   background: "transparent",
-                  color: "#94a3b8",
+                  color: "var(--text-muted)",
                   boxShadow: "none",
                 }}
                 className="protected-hover-button"
@@ -152,10 +151,10 @@ export default async function ProtectedUploadPage() {
                   ...activeNavButtonStyle,
                   padding: "10px 12px 12px",
                   border: "none",
-                  borderBottom: "2px solid #fde68a",
+                  borderBottom: "2px solid var(--accent-strong)",
                   borderRadius: 0,
                   background: "transparent",
-                  color: "#fde68a",
+                  color: "var(--accent-text)",
                   boxShadow: "none",
                 }}
                 className="protected-hover-button"
@@ -165,7 +164,8 @@ export default async function ProtectedUploadPage() {
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginLeft: "auto" }}>
-            <p style={{ margin: 0, color: "#64748b", textAlign: "right", fontSize: 14 }}>
+            <ThemeToggle />
+            <p style={{ margin: 0, color: "var(--text-muted)", textAlign: "right", fontSize: 14 }}>
               Signed in as {user.email ?? "Google user"}
             </p>
             <AuthControls isSignedIn variant="protected" />

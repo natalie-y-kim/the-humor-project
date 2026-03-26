@@ -9,6 +9,8 @@ export async function voteOnCaption(formData: FormData) {
   const voteValueRaw = formData.get("vote_value");
   const currentPageRaw = formData.get("current_page");
   const currentIndexRaw = formData.get("current_index");
+  const viewParam = formData.get("view");
+  const voteStateParam = formData.get("voteState");
   const orderParam = formData.get("order");
   const featuredParam = formData.get("featured");
   const publicOnlyParam = formData.get("publicOnly");
@@ -40,9 +42,15 @@ export async function voteOnCaption(formData: FormData) {
     return;
   }
 
+  let autoAdvance = false;
+  let submittedVote = voteValue;
+  let voteStatus: "saved" | "updated" | "removed" = "saved";
+
   if (existingVote?.id) {
     if (existingVote.vote_value === voteValue) {
       await supabase.from("caption_votes").delete().eq("id", existingVote.id);
+      autoAdvance = false;
+      voteStatus = "removed";
     } else {
       await supabase
         .from("caption_votes")
@@ -51,6 +59,8 @@ export async function voteOnCaption(formData: FormData) {
           modified_datetime_utc: new Date().toISOString(),
         })
         .eq("id", existingVote.id);
+      autoAdvance = true;
+      voteStatus = "updated";
     }
   } else {
     await supabase.from("caption_votes").insert({
@@ -59,6 +69,8 @@ export async function voteOnCaption(formData: FormData) {
       vote_value: voteValue,
       created_datetime_utc: new Date().toISOString(),
     });
+    autoAdvance = true;
+    voteStatus = "saved";
   }
 
   revalidatePath("/protected");
@@ -66,6 +78,12 @@ export async function voteOnCaption(formData: FormData) {
   const params = new URLSearchParams({
     page: String(currentPage),
     index: String(currentIndex),
+    view: typeof viewParam === "string" && viewParam ? viewParam : "detail",
+    voteState: typeof voteStateParam === "string" && voteStateParam ? voteStateParam : "all",
+    justVoted: "1",
+    autoAdvance: autoAdvance ? "1" : "0",
+    submittedVote: String(submittedVote),
+    voteStatus,
     order: typeof orderParam === "string" && orderParam ? orderParam : "caption_created_desc",
     featured: typeof featuredParam === "string" && featuredParam ? featuredParam : "false",
     publicOnly: typeof publicOnlyParam === "string" && publicOnlyParam ? publicOnlyParam : "true",

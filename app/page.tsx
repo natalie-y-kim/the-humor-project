@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AuthControls } from "@/app/auth-controls";
 import { createClient } from "@/lib/supabase/server";
+import { ThemeToggle } from "@/app/theme-toggle";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -12,6 +13,9 @@ export default async function Home() {
     <main className="landing-page">
       <div className="landing-layout">
         <section className="landing-hero">
+          <div style={{ width: "100%", display: "flex", justifyContent: "flex-end" }}>
+            <ThemeToggle />
+          </div>
           <p className="landing-badge">GENERATE & RATE CAPTIONS</p>
           <div className="landing-copy">
             <h1 className="landing-title">AI Caption Studio</h1>
@@ -34,7 +38,7 @@ export default async function Home() {
             <>
               <p className="landing-card-text">You are signed in as {user.email ?? "Google user"}.</p>
               <div className="flex items-center gap-2.5">
-                <Link className="landing-link" href="/protected?order=likes_desc&featured=false&publicOnly=true">
+                <Link className="landing-primary-link" href="/protected?order=likes_desc&featured=false&publicOnly=true">
                   Go to Studio
                 </Link>
                 <AuthControls isSignedIn />
