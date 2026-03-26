@@ -56,6 +56,7 @@ export async function voteOnCaption(formData: FormData) {
         .from("caption_votes")
         .update({
           vote_value: voteValue,
+          modified_by_user_id: user.id,
           modified_datetime_utc: new Date().toISOString(),
         })
         .eq("id", existingVote.id);
@@ -67,7 +68,7 @@ export async function voteOnCaption(formData: FormData) {
       profile_id: user.id,
       caption_id: captionId,
       vote_value: voteValue,
-      created_datetime_utc: new Date().toISOString(),
+      // created_datetime_utc: new Date().toISOString(),
     });
     autoAdvance = true;
     voteStatus = "saved";
