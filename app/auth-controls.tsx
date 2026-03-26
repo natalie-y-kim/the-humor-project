@@ -59,11 +59,17 @@ export function AuthControls({ isSignedIn, variant = "default" }: AuthControlsPr
       type="button"
       onClick={signInWithGoogle}
       style={{
-        border: "1px solid #2563eb",
-        background: "#2563eb",
-        color: "white",
-        borderRadius: 8,
-        padding: "10px 14px",
+        width: "100%",
+        border: "1px solid rgba(30, 41, 59, 0.08)",
+        background: "linear-gradient(135deg, #fcd34d 0%, #fbbf24 55%, #f59e0b 100%)",
+        color: "#1f2937",
+        borderRadius: 14,
+        padding: "14px 18px",
+        fontFamily: "system-ui, sans-serif",
+        fontSize: 16,
+        fontWeight: 700,
+        letterSpacing: "-0.01em",
+        boxShadow: "0 16px 32px rgba(245, 158, 11, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.28)",
         cursor: "pointer",
       }}
     >
