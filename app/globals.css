@@ -79,6 +79,29 @@ body {
   color: var(--text-primary);
 }
 
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@layer components {
+  .loading-spinner {
+    display: inline-block;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 999px;
+    border: 2px solid color-mix(in srgb, var(--accent-strong) 28%, transparent);
+    border-top-color: var(--accent-strong);
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+}
+
 @layer components {
   .landing-page {
     display: grid;

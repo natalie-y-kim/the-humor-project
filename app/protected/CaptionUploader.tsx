@@ -22,6 +22,7 @@ export function CaptionUploader() {
   const supabase = createClient();
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Preparing upload...");
   const [error, setError] = useState<string | null>(null);
   const [cdnUrl, setCdnUrl] = useState<string | null>(null);
   const [captions, setCaptions] = useState<any[]>([]);
@@ -40,6 +41,7 @@ export function CaptionUploader() {
     }
 
     setIsLoading(true);
+    setLoadingMessage("Preparing upload...");
     setCdnUrl(null);
     setCaptions([]);
 
@@ -53,14 +55,19 @@ export function CaptionUploader() {
         throw new Error("Missing auth access token. Please sign in again.");
       }
 
+      setLoadingMessage("Requesting secure upload URL...");
       const presigned = await generatePresignedUrl(accessToken, file.type);
+
+      setLoadingMessage("Uploading image...");
       await uploadToPresignedUrl(presigned.presignedUrl, file);
 
+      setLoadingMessage("Registering image...");
       const registered = await registerImageUrl(accessToken, presigned.cdnUrl);
-      const generatedCaptions = await generateCaptions(accessToken, registered.imageId);
-      
-
       setCdnUrl(presigned.cdnUrl);
+
+      setLoadingMessage("Generating captions...");
+      const generatedCaptions = await generateCaptions(accessToken, registered.imageId);
+
       setCaptions(generatedCaptions);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Upload failed.";
@@ -240,7 +247,7 @@ export function CaptionUploader() {
               boxShadow: "0 14px 30px rgba(245, 158, 11, 0.24)",
             }}
           >
-            {isLoading ? "Uploading..." : "Upload & Generate Captions"}
+            {isLoading ? "Generating..." : "Upload & Generate Captions"}
           </button>
           <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 14 }}>
             {file ? `Selected: ${file.name}` : "No image selected yet."}
@@ -249,6 +256,32 @@ export function CaptionUploader() {
       </div>
 
       {error ? <p style={{ margin: 0, color: "var(--negative-text)" }}>{error}</p> : null}
+
+      {isLoading ? (
+        <div
+          aria-live="polite"
+          aria-busy="true"
+          style={{
+            display: "grid",
+            gap: 14,
+            padding: "18px",
+            borderRadius: 20,
+            border: "1px solid color-mix(in srgb, var(--accent-strong) 45%, transparent)",
+            background: "linear-gradient(180deg, color-mix(in srgb, var(--accent-soft-bg) 72%, transparent) 0%, var(--surface-soft) 100%)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span className="loading-spinner" aria-hidden="true" />
+            <div style={{ display: "grid", gap: 4 }}>
+              <p style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "var(--text-primary)" }}>Generating caption options</p>
+              <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 14, lineHeight: 1.5 }}>{loadingMessage}</p>
+            </div>
+          </div>
+          <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13, lineHeight: 1.5 }}>
+            This can take a few moments. Keep this page open while the caption set is being prepared.
+          </p>
+        </div>
+      ) : null}
 
       {cdnUrl ? (
         <div
@@ -276,7 +309,9 @@ export function CaptionUploader() {
             </p>
             <p style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Generate captions</p>
             <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 14, lineHeight: 1.5 }}>
-              Your uploaded image is ready. Review the generated caption set below.
+              {isLoading
+                ? "Your image is uploaded. Caption generation is in progress."
+                : "Your uploaded image is ready. Review the generated caption set below."}
             </p>
           </div>
           <img
