@@ -17,7 +17,6 @@ type CaptionRow = {
   content?: string | null;
   image_id?: string | number | null;
   is_public?: boolean | null;
-  is_featured?: boolean | null;
   like_count?: number | null;
   created_datetime_utc?: string | null;
   images?: ImageRow | ImageRow[] | null;
@@ -46,7 +45,6 @@ function buildProtectedHref({
   index,
   voteState,
   order,
-  featured,
   publicOnly,
 }: {
   view: "list" | "detail";
@@ -54,10 +52,9 @@ function buildProtectedHref({
   index: number;
   voteState: string;
   order: string;
-  featured: string;
   publicOnly: string;
 }) {
-  return `/protected?view=${view}&page=${page}&index=${index}&voteState=${voteState}&order=${order}&featured=${featured}&publicOnly=${publicOnly}`;
+  return `/protected?view=${view}&page=${page}&index=${index}&voteState=${voteState}&order=${order}&publicOnly=${publicOnly}`;
 }
 
 export default async function ProtectedPage({
@@ -128,14 +125,12 @@ export default async function ProtectedPage({
   const submittedVoteParam = getParam(resolvedSearchParams, "submittedVote");
   const voteStatusParam = getParam(resolvedSearchParams, "voteStatus");
   const orderParam = getParam(resolvedSearchParams, "order") ?? "likes_desc";
-  const featuredParam = getParam(resolvedSearchParams, "featured") ?? "false";
   const publicOnlyParam = getParam(resolvedSearchParams, "publicOnly") ?? "true";
   const view = viewParam === "detail" ? "detail" : "list";
   const voteState =
     voteStateParam === "voted" || voteStateParam === "not_voted" ? voteStateParam : "all";
-  const isNewestSelected = featuredParam !== "true" && orderParam === "caption_created_desc";
-  const isMostLikedSelected = featuredParam !== "true" && orderParam === "likes_desc";
-  const isFeaturedSelected = featuredParam === "true";
+  const isNewestSelected = orderParam === "caption_created_desc";
+  const isMostLikedSelected = orderParam === "likes_desc";
   const isAllActivitySelected = voteState === "all";
   const isNotVotedActivitySelected = voteState === "not_voted";
   const isVotedActivitySelected = voteState === "voted";
@@ -170,15 +165,11 @@ export default async function ProtectedPage({
   let query = supabase
     .from(tableName)
     .select(
-      "id, content, image_id, is_public, is_featured, like_count, created_datetime_utc, images!inner ( id, url, created_datetime_utc, is_public )"
+      "id, content, image_id, is_public, like_count, created_datetime_utc, images!inner ( id, url, created_datetime_utc, is_public )"
     );
 
   if (publicOnlyParam !== "false") {
     query = query.eq("is_public", true);
-  }
-
-  if (featuredParam === "true") {
-    query = query.eq("is_featured", true);
   }
 
   query = query.eq("images.is_public", true);
@@ -211,7 +202,7 @@ export default async function ProtectedPage({
       break;
   }
 
-  const { data, error } = featuredParam === "true" ? await query : await query.range(from, to);
+  const { data, error } = await query.range(from, to);
   const captionIds =
     data
       ?.map((row) => (typeof row.id === "string" ? row.id : row.id != null ? String(row.id) : ""))
@@ -238,9 +229,9 @@ export default async function ProtectedPage({
   const clampedIndex = dataLength > 0 ? Math.max(0, Math.min(index, dataLength - 1)) : 0;
   const hasPrevCaption = clampedIndex > 0;
   const hasNextCaption = clampedIndex < dataLength - 1;
-  const showPrevPageButton = featuredParam !== "true" && !hasPrevCaption && page > 1;
-  const showNextPageButton = featuredParam !== "true" && !hasNextCaption && dataLength === perPage;
-  const showListNextPageButton = featuredParam !== "true" && dataLength === perPage;
+  const showPrevPageButton = !hasPrevCaption && page > 1;
+  const showNextPageButton = !hasNextCaption && dataLength === perPage;
+  const showListNextPageButton = dataLength === perPage;
   const nextDetailHref = hasNextCaption
     ? buildProtectedHref({
         view: "detail",
@@ -248,7 +239,6 @@ export default async function ProtectedPage({
         index: clampedIndex + 1,
         voteState,
         order: orderParam,
-        featured: featuredParam,
         publicOnly: publicOnlyParam,
       })
     : showNextPageButton
@@ -258,7 +248,6 @@ export default async function ProtectedPage({
           index: 0,
           voteState,
           order: orderParam,
-          featured: featuredParam,
           publicOnly: publicOnlyParam,
         })
       : null;
@@ -333,23 +322,16 @@ export default async function ProtectedPage({
             <a
               className="protected-hover-button"
               style={{ ...filterButtonStyle, ...(isNewestSelected ? activeFilterButtonStyle : {}) }}
-              href={`/protected?view=list&voteState=${voteState}&order=caption_created_desc&featured=false&publicOnly=${publicOnlyParam}`}
+              href={`/protected?view=list&voteState=${voteState}&order=caption_created_desc&publicOnly=${publicOnlyParam}`}
             >
               Newest
             </a>
             <a
               className="protected-hover-button"
               style={{ ...filterButtonStyle, ...(isMostLikedSelected ? activeFilterButtonStyle : {}) }}
-              href={`/protected?view=list&voteState=${voteState}&order=likes_desc&featured=false&publicOnly=${publicOnlyParam}`}
+              href={`/protected?view=list&voteState=${voteState}&order=likes_desc&publicOnly=${publicOnlyParam}`}
             >
               Most Liked
-            </a>
-            <a
-              className="protected-hover-button"
-              style={{ ...filterButtonStyle, ...(isFeaturedSelected ? activeFilterButtonStyle : {}) }}
-              href={`/protected?view=list&voteState=${voteState}&order=${orderParam}&featured=true&publicOnly=${publicOnlyParam}`}
-            >
-              Featured
             </a>
           </div>
         </div>
@@ -370,7 +352,7 @@ export default async function ProtectedPage({
             <a
               className="protected-hover-button"
               style={{ ...activityFilterButtonStyle, ...(isAllActivitySelected ? activeActivityFilterButtonStyle : {}) }}
-              href={`/protected?view=list&voteState=all&order=${orderParam}&featured=${featuredParam}&publicOnly=${publicOnlyParam}`}
+              href={`/protected?view=list&voteState=all&order=${orderParam}&publicOnly=${publicOnlyParam}`}
             >
               All
             </a>
@@ -380,14 +362,14 @@ export default async function ProtectedPage({
                 ...activityFilterButtonStyle,
                 ...(isNotVotedActivitySelected ? activeActivityFilterButtonStyle : {}),
               }}
-              href={`/protected?view=list&voteState=not_voted&order=${orderParam}&featured=${featuredParam}&publicOnly=${publicOnlyParam}`}
+              href={`/protected?view=list&voteState=not_voted&order=${orderParam}&publicOnly=${publicOnlyParam}`}
             >
               Not voted
             </a>
             <a
               className="protected-hover-button"
               style={{ ...activityFilterButtonStyle, ...(isVotedActivitySelected ? activeActivityFilterButtonStyle : {}) }}
-              href={`/protected?view=list&voteState=voted&order=${orderParam}&featured=${featuredParam}&publicOnly=${publicOnlyParam}`}
+              href={`/protected?view=list&voteState=voted&order=${orderParam}&publicOnly=${publicOnlyParam}`}
             >
               Voted
             </a>
@@ -456,7 +438,7 @@ export default async function ProtectedPage({
                     return (
                       <li key={previewId || previewIndex}>
                         <Link
-                          href={`/protected?view=detail&page=${page}&index=${previewIndex}&voteState=${voteState}&order=${orderParam}&featured=${featuredParam}&publicOnly=${publicOnlyParam}`}
+                          href={`/protected?view=detail&page=${page}&index=${previewIndex}&voteState=${voteState}&order=${orderParam}&publicOnly=${publicOnlyParam}`}
                           style={{
                             display: "grid",
                             gap: 12,
@@ -537,9 +519,7 @@ export default async function ProtectedPage({
                                 fontWeight: 600,
                               }}
                             >
-                              <span>
-                                {previewRow.is_featured ? "Featured" : orderParam === "likes_desc" ? "Most liked" : "Newest"}
-                              </span>
+                              <span>{orderParam === "likes_desc" ? "Most liked" : "Newest"}</span>
                               {typeof previewRow.like_count === "number" ? <span>{previewRow.like_count} likes</span> : null}
                             </div>
                           </div>
@@ -552,7 +532,7 @@ export default async function ProtectedPage({
                   <div style={{ display: "grid", justifyItems: "center", paddingTop: 50 }}>
                     <a
                       className="protected-hover-button"
-                      href={`/protected?view=list&page=${page + 1}&index=0&voteState=${voteState}&order=${orderParam}&featured=${featuredParam}&publicOnly=${publicOnlyParam}`}
+                      href={`/protected?view=list&page=${page + 1}&index=0&voteState=${voteState}&order=${orderParam}&publicOnly=${publicOnlyParam}`}
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
@@ -612,7 +592,6 @@ export default async function ProtectedPage({
                     index: currentIndex,
                     voteState,
                     order: orderParam,
-                    featured: featuredParam,
                     publicOnly: publicOnlyParam,
                   })}
                   style={{
@@ -740,7 +719,6 @@ export default async function ProtectedPage({
                       <input type="hidden" name="view" value="detail" />
                       <input type="hidden" name="voteState" value={voteState} />
                       <input type="hidden" name="order" value={orderParam} />
-                      <input type="hidden" name="featured" value={featuredParam} />
                       <input type="hidden" name="publicOnly" value={publicOnlyParam} />
                       <p
                         style={{
@@ -819,7 +797,7 @@ export default async function ProtectedPage({
                     }}
                   >
                     <span>
-                      {featuredParam === "true" ? "Featured" : orderParam === "likes_desc" ? "Most liked" : "Newest"}
+                      {orderParam === "likes_desc" ? "Most liked" : "Newest"}
                     </span>
                     {orderParam === "likes_desc" ? <span>Likes: {row.like_count ?? 0}</span> : null}
                     <span>{data.length > 0 ? `${currentIndex + 1} of ${data.length} on this page` : "No captions"}</span>
@@ -843,7 +821,6 @@ export default async function ProtectedPage({
                 index: clampedIndex - 1,
                 voteState,
                 order: orderParam,
-                featured: featuredParam,
                 publicOnly: publicOnlyParam,
               })}
             >
@@ -859,7 +836,6 @@ export default async function ProtectedPage({
                 index: 0,
                 voteState,
                 order: orderParam,
-                featured: featuredParam,
                 publicOnly: publicOnlyParam,
               })}
             >
@@ -876,7 +852,6 @@ export default async function ProtectedPage({
                 index: clampedIndex + 1,
                 voteState,
                 order: orderParam,
-                featured: featuredParam,
                 publicOnly: publicOnlyParam,
               })}
             >
@@ -892,7 +867,6 @@ export default async function ProtectedPage({
                 index: 0,
                 voteState,
                 order: orderParam,
-                featured: featuredParam,
                 publicOnly: publicOnlyParam,
               })}
             >
