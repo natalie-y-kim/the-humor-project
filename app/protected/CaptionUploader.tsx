@@ -18,6 +18,14 @@ const ALLOWED_TYPES = new Set([
   "image/heic",
 ]);
 
+function getCaptionText(caption: any) {
+  if (caption && typeof caption === "object" && "content" in caption) {
+    return typeof caption.content === "string" ? caption.content : JSON.stringify(caption);
+  }
+
+  return typeof caption === "string" ? caption : JSON.stringify(caption);
+}
+
 export function CaptionUploader() {
   const supabase = createClient();
   const [file, setFile] = useState<File | null>(null);
@@ -398,7 +406,7 @@ export function CaptionUploader() {
                   </span>
                 </div>
                 <p style={{ margin: 0, fontSize: 22, fontWeight: 700, lineHeight: 1.4, textAlign: "left", color: "var(--text-primary)" }}>
-                  {caption?.content ?? JSON.stringify(caption)}
+                  {getCaptionText(caption)}
                 </p>
               </li>
             ))}

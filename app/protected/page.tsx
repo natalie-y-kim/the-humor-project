@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AuthControls } from "@/app/auth-controls";
 import { createClient } from "@/lib/supabase/server";
 import { voteOnCaption } from "@/app/protected/vote-actions";
-import { ThemeToggle } from "@/app/theme-toggle";
 import { AutoAdvanceOnVote } from "@/app/protected/AutoAdvanceOnVote";
+import { ProtectedHeader } from "@/app/protected/ProtectedHeader";
 
 type ImageRow = {
   id?: string | number | null;
@@ -108,23 +107,6 @@ export default async function ProtectedPage({
     textDecoration: "none",
     fontWeight: 700,
     boxShadow: "0 12px 28px rgba(245, 158, 11, 0.24)",
-  };
-  const activeNavButtonStyle: React.CSSProperties = {
-    border: "1px solid rgba(253, 230, 138, 0.7)",
-    background: "linear-gradient(135deg, #fde68a 0%, #fcd34d 52%, #f59e0b 100%)",
-    color: "var(--accent-text)",
-    boxShadow: "0 14px 34px rgba(245, 158, 11, 0.32)",
-  };
-  const homeButtonStyle: React.CSSProperties = {
-    display: "inline-block",
-    padding: "8px 12px",
-    border: "1px solid var(--border-strong)",
-    borderRadius: 999,
-    background: "transparent",
-    color: "var(--text-muted)",
-    textDecoration: "none",
-    fontWeight: 400,
-    fontSize: 14,
   };
   const supabase = await createClient();
   const {
@@ -325,6 +307,7 @@ export default async function ProtectedPage({
           </p>
         </div>
       </div>
+      <ProtectedHeader activeTab="discover" userEmail={user.email} />
       <div
         style={{
           width: "100%",
@@ -333,81 +316,6 @@ export default async function ProtectedPage({
           gap: 12,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 14,
-            paddingBottom: 12,
-            borderBottom: "1px solid var(--border-default)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Link
-              href="/"
-              style={{
-                ...homeButtonStyle,
-                color: "var(--text-muted)",
-                fontSize: 13,
-              }}
-              className="protected-hover-button"
-            >
-              Home
-            </Link>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "2px",
-                borderBottom: "1px solid var(--border-strong)",
-              }}
-            >
-              <Link
-                href={`/protected?order=likes_desc&featured=false&publicOnly=${publicOnlyParam}`}
-                style={{
-                  ...navButtonStyle,
-                  ...activeNavButtonStyle,
-                  padding: "10px 12px 12px",
-                  border: "none",
-                  borderBottom: "2px solid var(--accent-strong)",
-                  borderRadius: 0,
-                  background: "transparent",
-                  color: "var(--accent-text)",
-                  boxShadow: "none",
-                }}
-                className="protected-hover-button"
-              >
-                Discover
-              </Link>
-              <Link
-                href="/protected/upload"
-                style={{
-                  ...navButtonStyle,
-                  padding: "10px 12px 12px",
-                  border: "none",
-                  borderBottom: "2px solid transparent",
-                  borderRadius: 0,
-                  background: "transparent",
-                  color: "var(--text-muted)",
-                  boxShadow: "none",
-                }}
-                className="protected-hover-button"
-              >
-                Create
-              </Link>
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginLeft: "auto" }}>
-            <ThemeToggle />
-            <p style={{ margin: 0, color: "var(--text-muted)", textAlign: "right", fontSize: 14 }}>
-              Signed in as {user.email ?? "Google user"}
-            </p>
-            <AuthControls isSignedIn variant="protected" />
-          </div>
-        </div>
         <div style={{ display: "grid", gap: 8, paddingTop: 2 }}>
           <p
             style={{
