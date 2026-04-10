@@ -414,15 +414,18 @@ export default async function ProtectedArchivePage({
               <Link
                 href={buildHistoryHref({ view: "list", page, index: clampedIndex })}
                 style={{
-                  display: "inline-block",
-                  border: "1px solid var(--border-default)",
-                  background: "transparent",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "1px solid rgba(251, 191, 36, 0.45)",
+                  background: "linear-gradient(135deg, #fcd34d 0%, #fbbf24 55%, #f59e0b 100%)",
                   borderRadius: 999,
-                  padding: "8px 12px",
-                  color: "var(--button-text-muted)",
+                  padding: "10px 16px",
+                  color: "var(--accent-text)",
                   textDecoration: "none",
                   fontSize: 14,
-                  fontWeight: 600,
+                  fontWeight: 700,
+                  boxShadow: "0 12px 28px rgba(245, 158, 11, 0.24)",
                 }}
                 className="protected-hover-button"
               >
