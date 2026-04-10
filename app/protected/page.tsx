@@ -559,9 +559,10 @@ export default async function ProtectedPage({
                             background: "var(--surface-strong)",
                             textDecoration: "none",
                           }}
-                          className="protected-hover-button"
+                          className="protected-hover-button discover-caption-card"
                         >
                           <div
+                            className="discover-caption-card-image"
                             style={{
                               aspectRatio: "4 / 3",
                               borderRadius: 14,
@@ -607,6 +608,7 @@ export default async function ProtectedPage({
                               ) : null}
                             </div>
                             <p
+                              className="discover-caption-card-text"
                               style={{
                                 margin: 0,
                                 color: "var(--text-primary)",

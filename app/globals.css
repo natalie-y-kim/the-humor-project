@@ -393,3 +393,43 @@ body {
 .protected-hover-button:disabled {
   filter: none;
 }
+
+.discover-caption-card {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease,
+    filter 120ms ease,
+    opacity 120ms ease;
+  box-shadow: var(--shadow-soft);
+}
+
+.discover-caption-card:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--accent-strong) 50%, var(--border-default));
+  box-shadow: 0 24px 42px rgba(245, 158, 11, 0.18);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent-soft-bg) 55%, var(--surface-strong)) 0%,
+    var(--surface-strong) 100%
+  );
+}
+
+.discover-caption-card:hover .discover-caption-card-image img {
+  transform: scale(1.04);
+}
+
+.discover-caption-card-image img {
+  transition: transform 180ms ease;
+}
+
+.discover-caption-card:hover .discover-caption-card-text {
+  color: color-mix(in srgb, var(--text-primary) 86%, var(--accent));
+}
+
+.discover-caption-card-text {
+  transition: color 160ms ease;
+}
