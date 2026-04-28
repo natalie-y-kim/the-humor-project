@@ -38,7 +38,7 @@ export default async function Home() {
             <>
               <p className="landing-card-text">You are signed in as {user.email ?? "Google user"}.</p>
               <div className="flex items-center gap-2.5">
-                <Link className="landing-primary-link" href="/protected?order=likes_desc&featured=false&publicOnly=true">
+                <Link className="landing-primary-link" href="/protected?order=likes_desc&featured=false&publicOnly=false">
                   Go to Studio
                 </Link>
                 <AuthControls isSignedIn />

@@ -92,7 +92,7 @@ export function ProtectedHeader({
             }}
           >
             <Link
-              href="/protected?order=likes_desc&featured=false&publicOnly=true"
+              href="/protected?order=likes_desc&featured=false&publicOnly=false"
               style={activeTab === "discover" ? activeButtonStyle : inactiveNavButtonStyle}
               className="protected-hover-button"
             >

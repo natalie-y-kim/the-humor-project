@@ -87,7 +87,7 @@ export async function voteOnCaption(formData: FormData) {
     voteStatus,
     order: typeof orderParam === "string" && orderParam ? orderParam : "caption_created_desc",
     featured: typeof featuredParam === "string" && featuredParam ? featuredParam : "false",
-    publicOnly: typeof publicOnlyParam === "string" && publicOnlyParam ? publicOnlyParam : "true",
+    publicOnly: typeof publicOnlyParam === "string" && publicOnlyParam ? publicOnlyParam : "false",
   });
 
   redirect(`/protected?${params.toString()}`);

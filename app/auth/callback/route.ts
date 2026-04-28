@@ -10,5 +10,5 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  return NextResponse.redirect(new URL("/protected?order=likes_desc&featured=false&publicOnly=true", request.url));
+  return NextResponse.redirect(new URL("/protected?order=likes_desc&featured=false&publicOnly=false", request.url));
 }

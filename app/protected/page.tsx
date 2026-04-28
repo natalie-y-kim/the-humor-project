@@ -23,6 +23,9 @@ type CaptionRow = {
 };
 
 type SearchParams = Record<string, string | string[] | undefined>;
+type CaptionIdRow = {
+  caption_id?: string | null;
+};
 type CaptionVoteRow = {
   caption_id?: string | null;
   vote_value?: number | null;
@@ -125,10 +128,11 @@ export default async function ProtectedPage({
   const submittedVoteParam = getParam(resolvedSearchParams, "submittedVote");
   const voteStatusParam = getParam(resolvedSearchParams, "voteStatus");
   const orderParam = getParam(resolvedSearchParams, "order") ?? "likes_desc";
-  const publicOnlyParam = getParam(resolvedSearchParams, "publicOnly") ?? "true";
+  const publicOnlyParam = getParam(resolvedSearchParams, "publicOnly") ?? "false";
   const view = viewParam === "detail" ? "detail" : "list";
   const voteState =
     voteStateParam === "voted" || voteStateParam === "not_voted" ? voteStateParam : "all";
+  const shouldApplyPublicFilter = publicOnlyParam === "true";
   const isNewestSelected = orderParam === "caption_created_desc";
   const isMostLikedSelected = orderParam === "likes_desc";
   const isAllActivitySelected = voteState === "all";
@@ -149,30 +153,39 @@ export default async function ProtectedPage({
   const from = (page - 1) * perPage;
   const to = from + perPage - 1;
   let votedCaptionIds: string[] = [];
+  let userVoteRows: CaptionIdRow[] = [];
+  let userLikeRows: CaptionIdRow[] = [];
 
   if (voteState !== "all") {
-    const { data: userVotes } = await supabase
-      .from("caption_votes")
-      .select("caption_id")
-      .eq("profile_id", user.id);
+    const [{ data: userVotes }, { data: userLikes }] = await Promise.all([
+      supabase.from("caption_votes").select("caption_id").eq("profile_id", user.id),
+      supabase.from("caption_likes").select("caption_id").eq("profile_id", user.id),
+    ]);
 
-    votedCaptionIds =
-      (userVotes as Array<{ caption_id?: string | null }> | null)
-        ?.map((row) => (typeof row.caption_id === "string" ? row.caption_id : ""))
-        .filter((id) => id.length > 0) ?? [];
+    userVoteRows = (userVotes as CaptionIdRow[] | null) ?? [];
+    userLikeRows = (userLikes as CaptionIdRow[] | null) ?? [];
+
+    votedCaptionIds = Array.from(
+      new Set(
+        [...userVoteRows, ...userLikeRows]
+          .map((row) => (typeof row.caption_id === "string" ? row.caption_id : ""))
+          .filter((id) => id.length > 0)
+      )
+    );
   }
 
   let query = supabase
     .from(tableName)
     .select(
-      "id, content, image_id, is_public, like_count, created_datetime_utc, images!inner ( id, url, created_datetime_utc, is_public )"
+      shouldApplyPublicFilter
+        ? "id, content, image_id, is_public, like_count, created_datetime_utc, images!inner ( id, url, created_datetime_utc, is_public )"
+        : "id, content, image_id, is_public, like_count, created_datetime_utc, images ( id, url, created_datetime_utc, is_public )"
     );
 
-  if (publicOnlyParam !== "false") {
+  if (shouldApplyPublicFilter) {
     query = query.eq("is_public", true);
+    query = query.eq("images.is_public", true);
   }
-
-  query = query.eq("images.is_public", true);
 
   if (voteState === "voted") {
     if (votedCaptionIds.length === 0) {
